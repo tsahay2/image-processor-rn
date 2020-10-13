@@ -1,0 +1,8 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: heapdump,liquibase,loggers,prometheus,threaddump,info,metrics,health
+
+spring.servlet.multipart.maxFileSize: 50MB
+spring.servlet.multipart.maxRequestSize: 50MB
