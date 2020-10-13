@@ -1,15 +1,17 @@
 import React, {Component} from 'react';
-import { StyleSheet, Text, View ,TouchableOpacity,Platform, } from 'react-native';
+import { StyleSheet, Text, View ,TouchableOpacity,Platform, Image,Dimensions} from 'react-native';
 import { Camera } from 'expo-camera';
 import * as Permissions from 'expo-permissions';
 import { FontAwesome, Ionicons,MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-
+import * as MediaLibrary from 'expo-media-library';
+import SendImageComponent from "./SendImageComponent";
 
 class CameraComponent extends Component{
 
     state = {
         hasPermission: null,
+        currentPic: '',
         cameraType: Camera.Constants.Type.back,
     };
 
@@ -31,7 +33,7 @@ class CameraComponent extends Component{
     };
 
     handleCameraType=()=>{
-        const { cameraType } = this.state
+        const { cameraType } = this.state;
 
         this.setState({cameraType:
                 cameraType === Camera.Constants.Type.back
@@ -43,7 +45,10 @@ class CameraComponent extends Component{
     takePicture = async () => {
         if (this.camera) {
             let photo = await this.camera.takePictureAsync();
-
+            MediaLibrary.saveToLibraryAsync(photo.uri);
+           this.setState({
+               currentPic : photo.uri
+           });
         }
     };
 
@@ -70,7 +75,7 @@ class CameraComponent extends Component{
         // Assume "photo" is the name of the form field the server expects
         formData.append('photo', { uri: localUri, name: filename, type });
         console.log("Image URI is : "+result.uri);
-        return await fetch("http://localhost:8080/upload", {
+        return await fetch("http://192.168.1.43:8080/upload", {
             method: 'POST',
             body: formData,
             headers: {
@@ -97,48 +102,57 @@ class CameraComponent extends Component{
         } else {
             return (
                 <View style={{ flex: 1 }}>
-                    <Camera style={{ flex: 1 }} type={this.state.cameraType}  ref={ref => {this.camera = ref}}>
-                        <View style={{flex:1, flexDirection:"row",justifyContent:"space-between",margin:30}}>
-                            <TouchableOpacity
-                                style={{
-                                    alignSelf: 'flex-end',
-                                    alignItems: 'center',
-                                    backgroundColor: 'transparent'
-                                }}
-                                onPress={()=>this.pickImage()}>
-                                <Ionicons
-                                    name="ios-photos"
-                                    style={{ color: "#fff", fontSize: 40}}
-                                />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={{
-                                    alignSelf: 'flex-end',
-                                    alignItems: 'center',
-                                    backgroundColor: 'transparent',
-                                }}
-                                onPress={()=>this.takePicture()}
-                            >
-                                <FontAwesome
-                                    name="camera"
-                                    style={{ color: "#fff", fontSize: 40}}
-                                />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={{
-                                    alignSelf: 'flex-end',
-                                    alignItems: 'center',
-                                    backgroundColor: 'transparent',
-                                }}
-                                onPress={()=>this.handleCameraType()}
-                            >
-                                <MaterialCommunityIcons
-                                    name="camera-switch"
-                                    style={{ color: "#fff", fontSize: 40}}
-                                />
-                            </TouchableOpacity>
-                        </View>
-                    </Camera>
+                    {(this.state.currentPic !== '') ? <SendImageComponent uri={this.state.currentPic}/> :
+
+                        <Camera style={{flex: 1, position: 'relative'}} type={this.state.cameraType} ref={ref => {
+                            this.camera = ref
+                        }}>
+                            <View style={{flex: 1, flexDirection: "row", justifyContent: "space-between", margin: 30}}>
+
+                                <TouchableOpacity
+                                    style={{
+                                        position: 'relative',
+                                        alignSelf: 'flex-end',
+                                        alignItems: 'center',
+                                        backgroundColor: 'transparent'
+                                    }}
+                                    onPress={() => this.pickImage()}>
+                                    <Ionicons
+                                        name="ios-photos"
+                                        style={{color: "#fff", fontSize: 40}}
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{
+                                        position: 'relative',
+                                        alignSelf: 'flex-end',
+                                        alignItems: 'center',
+                                        backgroundColor: 'transparent',
+                                    }}
+                                    onPress={() => this.takePicture()}
+                                >
+                                    <FontAwesome
+                                        name="camera"
+                                        style={{color: "#fff", fontSize: 40}}
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={{
+                                        position: 'relative',
+                                        alignSelf: 'flex-end',
+                                        alignItems: 'center',
+                                        backgroundColor: 'transparent',
+                                    }}
+                                    onPress={() => this.handleCameraType()}
+                                >
+                                    <MaterialCommunityIcons
+                                        name="camera-switch"
+                                        style={{color: "#fff", fontSize: 40}}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </Camera>
+                    }
                 </View>
             );
         }
